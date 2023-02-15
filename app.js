@@ -131,21 +131,21 @@ app.get("/user/tweets/feed/", async (request, response) => {
       if (error) {
         response.send("Invalid Access Token");
       } else {
-        const {
-          order_by = "date_time",
-          order = "DESC",
-          limit = 4,
-          offset = 0,
-        } = request.query;
-        const latestTweets = `
-        SELECT 
-            username,tweet,date_time 
-        FROM 
-            user INNER JOIN tweet ON user.user_id = tweet.user_id
+        const tweetsQuery = `
+        SELECT
+            user.username, tweet.tweet, tweet.date_time AS dateTime
+        FROM
+            follower
+            INNER JOIN tweet
+            ON follower.following_user_id = tweet.user_id
+            INNER JOIN user
+            ON tweet.user_id = user.user_id
+        WHERE
+            follower.follower_user_id = tweet.user_id
         ORDER BY
-            ${order_by} ${order}
-            LIMIT ${limit} OFFSET ${offset}`;
-        const recentTweets = await database.all(latestTweets);
+            tweet.date_time DESC
+        LIMIT 4;`;
+        const recentTweets = await database.all(tweetsQuery);
         response.send(recentTweets);
       }
     });
